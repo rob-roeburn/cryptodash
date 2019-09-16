@@ -107,10 +107,7 @@ Then two helper functions, one to get a price for a currency ID, and one to gene
 
 At this point we can load the page and see a dropdown with a currency value displayed from the cached data, and change the value to see the state updating next to the list:
 
-!(https://github.com/rob-roeburn/cryptodash/blob/master/client/public/tickerlist.png "")
-
-
-
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/tickerlist.png "Ticker List")
 
 
 ## Built With
