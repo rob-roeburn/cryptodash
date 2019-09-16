@@ -68,6 +68,50 @@ The result in Mongo is a cached copy of the data:
         }
 }`
 
+We also provide a cmcCall method from /api/get, which allows refresh from the live source with a call like this.  This functionality is leveraged directly from the coinmarketcap page and uses their example API key - a real key should be used to get data.
+
+`/api/get?command=cmcCall&file=coinmarketcap.json&endpoint=pro-api.coinmarketcap.com&path=/v1/cryptocurrency/listings/latest&apikey=b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c`
+
+### Portfolio structure
+
+We also need a collection to store portfolio data. This should have a value for the realised profit and loss and a positions array to store ongoing trade data.  We also include IDs for user and portfolio, although at this stage we will only display a single user and portfolio.
+
+`{
+  "_id": ObjectId("5d791fbfb9b8dc7b0b87037d"),
+  "userId":0,
+  "friendlyName":"My User",
+  "portfolioId":0,
+  "positions": [
+   "_id" : "5d7f54aa52fb4c085d94e162",
+    "DateTime" : 1568625834179,
+    "positionQty" : "0.72",
+    "currencyId" : "1",
+    "name" : "Bitcoin",
+    "symbol" : "BTC",
+    "priceAtTrade" : "9558.55163723",
+    "active" : true,
+    "PL" : 0
+  ]
+}`
+
+## Displaying cached data
+
+We want to present the user with a dropdown with friendly names for the currencies, and retrieve price data from the cache.  We do this with a control in the client app, and some additional get methods.  We have getTickers to get the list of currencies, and getPrice to retrieve a price per currency ID.  Example calls:
+
+`/api/get?command=getTickers`
+`/api/get?command=getPrice&tickerId=1`
+
+At this stage, we set up a React hook by declaring both state and setter as useState.  We will always want the ticker list to be displayed to the user on page load, so we create an async function to be called on init, then use useEffect to ensure that the page load will fire it.  This is analogous to the componentDidMount function from the previous lifecycle methodology in React.
+
+Then two helper functions, one to get a price for a currency ID, and one to generate a list of options for the dropdown.  getOptions generates the dropdown list, and getPrice leverages the same api call name in MongoServer and updates the state each time the list changes.
+
+At this point we can load the page and see a dropdown with a currency value displayed from the cached data, and change the value to see the state updating next to the list:
+
+!(https://github.com/rob-roeburn/cryptodash/blob/master/client/public/tickerlist.png "")
+
+
+
+
 
 ## Built With
 
