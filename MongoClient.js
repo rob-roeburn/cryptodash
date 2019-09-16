@@ -155,6 +155,26 @@ app.post('/api/post', (req, res) => {
     res.send()
     break
 
+    case 'exitPosition':
+    mongo.connect(mongourl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }, (err, client) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      const db = client.db('cryptodash')
+      const cl = db.collection('portfolios')
+      cl.find( {portfolioId : 0 }).toArray((err, output) => {
+        let newRealisedPL=output[0].realisedPL+req.body.post[2].realisedPL;
+        cl.updateOne({portfolioId:0},{'$set': {'realisedPL':parseFloat(newRealisedPL)}}, (err, item) => {})
+        cl.updateOne({portfolioId:req.body.post[0].portfolioId, 'positions._id':req.body.post[1].positionId},{'$set': {'positions.$.active':false}}, (err, item) => {})
+      })
+    })
+    res.send()
+    break
+
     default:
     console.log("Fallthrough")
   }

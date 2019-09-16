@@ -249,12 +249,52 @@ export default function App() {
 
   return (
     <div>
+    {/* Headlines */}
+    <div className="outerDiv">
+    <div className="leftDiv"><h2>CryptoDash</h2></div>
+    <div className="midDiv"><h4>Unrealised P&L Total: {currencySymbol+''+pState.portfolioUnrealisedPL}</h4></div>
+    <div className="rightDiv"><h4>Realised P&L Total: {currencySymbol+''+pState.portfolioRealisedPL}</h4></div>
+    </div>
+
     {/* Portfolio view table */}
     <MaterialTable
     title='Portfolio View'
     icons={tableIcons}
     columns={pState.portfoliocolumns}
     data={pState.positionData}
+    editable={{
+      onRowDelete: oldData =>
+      new Promise(resolve => {
+        if(oldData.active==='true') {
+          setTimeout(() => {
+            fetch('/api/get?command=getPrice&tickerId='+oldData.currencyId, { } )
+            .then(function(response) {
+              return response.json();
+            })
+            .then(function(currentPriceRes) {
+              let postData = []
+              postData.push({"portfolioId": oldData.portfolioId})
+              postData.push({"positionId": oldData.id})
+              postData.push({"realisedPL": (currentPriceRes[0].data[0].quote.USD.price-oldData.tradePrice)*oldData.position})
+              fetch('/api/post?command=exitPosition', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ post: postData }),
+              })
+              .then(function(response) {
+                refreshPortfolio()
+                resolve();
+              })
+            })
+          }, 250);
+        } else {
+          alert("You cannot exit a closed position.")
+          resolve();
+        }
+      }),
+    }}
     />
 
     {/* Trade entry and system control */}
