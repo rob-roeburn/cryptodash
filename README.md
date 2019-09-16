@@ -115,6 +115,12 @@ We want the selected currency to be entered into the portfolio as a position wit
 
 ![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/portfolioview.png "Portfolio View")
 
+## Calculating P&L
+
+To avoid re-querying the coinmarketcap api repeatedly, we can reload from one of our two cache files.  One is from the sandbox, one from the production environment.  The changing prices will allow us to calculate P&L.  We have system controls at the base of the file with two buttons to provide the ability to re-cache the data on the fly.  We have another async helper function updateCacheFile to receive the click event from the buttons and route to the cmcCache API call we created earlier.
+
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/cachereload.png "P&L Calculated")
+
 ## Built With
 
 * [React](https://reactjs.org/) - The web framework used

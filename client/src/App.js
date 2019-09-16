@@ -172,6 +172,9 @@ export default function App() {
 
   useEffect(() => { initPage(); return () => { controller.abort(); } }, []);
 
+  /**
+  * Async function to retrieve price data for a ticker defined by the CMC ID.
+  */
   const getPrice = async e => {
     let tickerId =[...tState.tickerId]
     tickerId=e.target.value
@@ -194,6 +197,9 @@ export default function App() {
     }
   }
 
+  /**
+  * Async function to enter trade data using the selected currency and input position data.
+  */
   const enterTrade = async e => {
     if (window.confirm ("Are you sure?")) {
       let postData = []
@@ -221,6 +227,22 @@ export default function App() {
     }
   }
 
+  /**
+  * Async function to reset the cache file in the database based on the button value.
+  */
+  const updateCacheFile = async e => {
+    const response = await fetch('/api/get?command=cmcCache&file='+e.target.textContent)
+    const body = await response.json()
+    if (response.status !== 200) {
+      throw Error(body.message)
+    } else {
+      loadTickers()
+      let tickers=[];
+      setTState({...tState, tickers})
+      refreshPortfolio()
+    }
+  }
+
   const getOptions = tState.tickers.map(
     (ticker) => <option value={ticker.id}>{ticker.name}</option>
   )
@@ -235,10 +257,20 @@ export default function App() {
     data={pState.positionData}
     />
 
-    Select currency:<select onChange={getPrice}>{getOptions}</select>
-    Price of currency ({currency}):{currencySymbol+''+tState.tickerPrice}
-    Position quantity<input id='positionQty' type='text' />
-    <Button variant="contained" color="primary" onClick={enterTrade}>Trade</Button>
+    {/* Trade entry and system control */}
+    <table>
+    <tbody>
+    <tr><td><h3>Trade Entry</h3></td></tr>
+    <tr><td>Select currency</td><td><select onChange={getPrice}>{getOptions}</select></td></tr>
+    <tr><td>Price of currency ({currency})</td><td id='tickerPrice'>{currencySymbol+''+tState.tickerPrice}</td></tr>
+    <tr><td>Position quantity</td><td><input id='positionQty' type='text' /></td></tr>
+    <tr><td></td><td><Button variant="contained" color="primary" onClick={enterTrade}>Trade</Button></td></tr>
+    <tr><td><h3>System Control</h3></td></tr>
+    <tr><td>Reload cache from sandbox</td><td><Button variant="contained" color="primary" onClick={updateCacheFile}>coinmarketcap.json</Button></td></tr>
+    <tr><td>Reload cache from pro</td><td><Button variant="contained" color="primary" onClick={updateCacheFile}>pro.coinmarketcap.json</Button></td></tr>
+    </tbody>
+    </table>
+
     </div>
   )
 }
