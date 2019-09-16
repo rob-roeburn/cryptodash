@@ -109,6 +109,11 @@ At this point we can load the page and see a dropdown with a currency value disp
 
 ![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/tickerlist.png "Ticker List")
 
+## Entering positions to a portfolios
+
+We want the selected currency to be entered into the portfolio as a position with a quantity.  To do this we provide an input field next to the currency, and add a table view.  We leverage the functionality in [Material Tables](https://material-ui.com/components/tables/) to achieve this.  We also declare a separate portfolio state and setter to allow control independently from the ticker list.  We also provide our first post function in the MongoServer API : `/api/post?command=newPosition`.  We collect the required data, encapsulate it to JSON, and send it to the Mongo interface to be added to the portfolio collection.  The data will display using the cryptocurrency name and symbol, but uses the internal ID for storage, as these are not liable to change.
+
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/portfolioview.png "Portfolio View")
 
 ## Built With
 
