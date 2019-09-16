@@ -1,6 +1,6 @@
 # CryptoDash
 
-![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/hero.png "Crypto Dash")
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/img/hero.png "Crypto Dash")
 
 This is a small dashboard view to display the value of cryptocurrencies and record trading activity.  A portfolio view is displayed with position valuation.  Positions can be traded in and out, with a running total P&L displayed alongside the portfolio.
 
@@ -109,29 +109,29 @@ Then two helper functions, one to get a price for a currency ID, and one to gene
 
 At this point we can load the page and see a dropdown with a currency value displayed from the cached data, and change the value to see the state updating next to the list:
 
-![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/tickerlist.png "Ticker List")
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/img/tickerlist.png "Ticker List")
 
 ## Entering positions to a portfolio
 
 We want the selected currency to be entered into the portfolio as a position with a quantity.  To do this we provide an input field next to the currency, and add a table view.  We leverage the functionality in [Material Tables](https://material-ui.com/components/tables/) to achieve this.  We also declare a separate portfolio state and setter to allow control independently from the ticker list.  We also provide our first post function in the MongoServer API : `/api/post?command=newPosition`.  We collect the required data, encapsulate it to JSON, and send it to the Mongo interface to be added to the portfolio collection.  The data will display using the cryptocurrency name and symbol, but uses the internal ID for storage, as these are not liable to change.
 
-![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/portfolioview.png "Portfolio View")
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/img/portfolioview.png "Portfolio View")
 
 ## Calculating P&L
 
 To avoid re-querying the coinmarketcap api repeatedly, we can reload from one of our two cache files.  One is from the sandbox, one from the production environment.  The changing prices will allow us to calculate P&L.  We have system controls at the base of the file with two buttons to provide the ability to re-cache the data on the fly.  We have another async helper function updateCacheFile to receive the click event from the buttons and route to the cmcCache API call we created earlier.
 
-![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/cachereload.png "P&L Calculated")
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/img/cachereload.png "P&L Calculated")
 
 ## Realising P&L
 
 We need to be able to exit a position to differentiate between realised and unrealised P&L.  We can leverage the materialTable control which precludes us from needing to associate additional buttons to each row.  MaterialTable has an editable parameter onRowDelete, which we can use to call our function to exit the position.  At this time, we also re-query the current price for the currency, to calculate realised P&L and record it into the portfolio.  All this is sent to a postable exitPosition function in the MongoClient instance.
 
-![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/exitposition.png "Out of Position")
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/img/exitposition.png "Out of Position")
 
 At this point we should also display the ongoing realised and unrealised P&L aggregate figures to the user, so we have a headline section to do just that:
 
-![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/headline.png "Headline")
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/img/headline.png "Headline")
 
 ## Resetting the portfolio
 
