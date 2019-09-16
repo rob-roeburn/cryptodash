@@ -98,12 +98,67 @@ app.get('/api/get', (req, res) => {
     })
     break
 
+    case 'getPortfolio':
+    mongo.connect(mongourl, { useNewUrlParser: true, useUnifiedTopology: true
+    }, (err, client) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      let portfolioId = parseInt(req.query.portfolio)
+      const db = client.db('cryptodash')
+      const cl = db.collection('portfolios')
+      cl.find( {portfolioId : portfolioId }).toArray((err, output) => {
+        res.send(output)
+      })
+    })
+    break
+
     default:
     console.log("Fallthrough")
   }
 })
 
+
 app.post('/api/post', (req, res) => {
+
+  switch(req.query.command) {
+    case 'newPosition' :
+    mongo.connect(mongourl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }, (err, client) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      const db = client.db('cryptodash')
+      const cl = db.collection('portfolios')
+      cl.find( {portfolioId : 0 }).toArray((err, output) => {
+        output[0].positions.push(
+          {
+            _id : new ObjectID().toHexString(),
+            DateTime : new Date().getTime(),
+            positionQty : req.body.post[2].positionQty,
+            currencyId : req.body.post[3].tickerId,
+            name : req.body.post[4].tickerName,
+            symbol : req.body.post[5].tickerSymbol,
+            priceAtTrade : req.body.post[6].tickerPrice,
+            active : true,
+            PL : 0
+          }
+        )
+        cl.updateOne({portfolioId:0},{'$set': {'positions':output[0].positions}}, (err, item) => {
+        })
+      })
+    })
+    res.send()
+    break
+
+    default:
+    console.log("Fallthrough")
+  }
 })
+
 
 app.listen(port, () => console.log(`Listening on port ${port}`))
