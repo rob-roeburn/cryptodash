@@ -155,6 +155,26 @@ app.post('/api/post', (req, res) => {
     res.send()
     break
 
+    case 'resetPortfolio':
+    mongo.connect(mongourl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }, (err, client) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      const db = client.db('cryptodash')
+      const cl = db.collection('portfolios')
+      cl.find( {portfolioId : 0 }).toArray((err, output) => {
+        let newRealisedPL=0;
+        cl.updateOne({portfolioId:0},{'$set': {'realisedPL':0}}, (err, item) => {})
+        cl.updateOne({portfolioId:req.body.post[0].portfolioId}, {'$set': {'positions':[]}}, (err, item) => {})
+      })
+    })
+    res.send()
+    break
+
     case 'exitPosition':
     mongo.connect(mongourl, {
       useNewUrlParser: true,

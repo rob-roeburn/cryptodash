@@ -1,5 +1,7 @@
 # CryptoDash
 
+![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/hero.png "Crypto Dash")
+
 This is a small dashboard view to display the value of cryptocurrencies and record trading activity.  A portfolio view is displayed with position valuation.  Positions can be traded in and out, with a running total P&L displayed alongside the portfolio.
 
 # Design
@@ -130,6 +132,10 @@ We need to be able to exit a position to differentiate between realised and unre
 At this point we should also display the ongoing realised and unrealised P&L aggregate figures to the user, so we have a headline section to do just that:
 
 ![alt text](https://github.com/rob-roeburn/cryptodash/blob/master/client/public/headline.png "Headline")
+
+## Resetting the portfolio
+
+The portfolio keeps a record of closed positions, so to allow the view to be kept neat, we provide a function to zero all activity and restore to a clean starting state.  This is added under the system control section.  Another async helper function is used to route the request to the resetPortfolio post handler in the API.
 
 
 

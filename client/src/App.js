@@ -243,6 +243,31 @@ export default function App() {
     }
   }
 
+  /**
+  * Async function to reset the portfolio view in the database completely.
+  */
+  const resetPortfolio = async e => {
+    if (window.confirm ("Are you sure?")) {
+      let postData = []
+      postData.push({"portfolioId": pState.portfolioId})
+      const response = await fetch('/api/post?command=resetPortfolio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: postData }),
+      })
+      const body = await response
+      if (response.status !== 200) {
+        throw Error(body.message)
+      } else {
+        setTimeout(() => {
+          refreshPortfolio()
+        }, 250);
+      }
+    }
+  }
+
   const getOptions = tState.tickers.map(
     (ticker) => <option value={ticker.id}>{ticker.name}</option>
   )
@@ -308,6 +333,7 @@ export default function App() {
     <tr><td><h3>System Control</h3></td></tr>
     <tr><td>Reload cache from sandbox</td><td><Button variant="contained" color="primary" onClick={updateCacheFile}>coinmarketcap.json</Button></td></tr>
     <tr><td>Reload cache from pro</td><td><Button variant="contained" color="primary" onClick={updateCacheFile}>pro.coinmarketcap.json</Button></td></tr>
+    <tr><td>Reset portfolio</td><td><Button variant="contained" color="primary" onClick={resetPortfolio}>Zero positions</Button></td></tr>
     </tbody>
     </table>
 
