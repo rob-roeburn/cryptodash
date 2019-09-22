@@ -1,23 +1,23 @@
-import React, { forwardRef, useState, useEffect }  from 'react';
-import MaterialTable from 'material-table';
-import AddBox from '@material-ui/icons/AddBox';
-import ArrowUpward from '@material-ui/icons/ArrowUpward';
-import Check from '@material-ui/icons/Check';
-import ChevronLeft from '@material-ui/icons/ChevronLeft';
-import ChevronRight from '@material-ui/icons/ChevronRight';
-import Clear from '@material-ui/icons/Clear';
-import DeleteOutline from '@material-ui/icons/DeleteOutline';
-import Edit from '@material-ui/icons/Edit';
-import FilterList from '@material-ui/icons/FilterList';
-import FirstPage from '@material-ui/icons/FirstPage';
-import LastPage from '@material-ui/icons/LastPage';
-import Remove from '@material-ui/icons/Remove';
-import SaveAlt from '@material-ui/icons/SaveAlt';
-import Search from '@material-ui/icons/Search';
-import ViewColumn from '@material-ui/icons/ViewColumn';
-import Button from '@material-ui/core/Button';
+import React, { forwardRef, useState, useEffect }  from 'react'
+import MaterialTable from 'material-table'
+import AddBox from '@material-ui/icons/AddBox'
+import ArrowUpward from '@material-ui/icons/ArrowUpward'
+import Check from '@material-ui/icons/Check'
+import ChevronLeft from '@material-ui/icons/ChevronLeft'
+import ChevronRight from '@material-ui/icons/ChevronRight'
+import Clear from '@material-ui/icons/Clear'
+import DeleteOutline from '@material-ui/icons/DeleteOutline'
+import Edit from '@material-ui/icons/Edit'
+import FilterList from '@material-ui/icons/FilterList'
+import FirstPage from '@material-ui/icons/FirstPage'
+import LastPage from '@material-ui/icons/LastPage'
+import Remove from '@material-ui/icons/Remove'
+import SaveAlt from '@material-ui/icons/SaveAlt'
+import Search from '@material-ui/icons/Search'
+import ViewColumn from '@material-ui/icons/ViewColumn'
+import Button from '@material-ui/core/Button'
 
-import './App.css';
+import './App.css'
 
 
 /**
@@ -26,7 +26,7 @@ import './App.css';
 
 export default function App() {
 
-  const controller = new AbortController();
+  const controller = new AbortController()
 
   const dateOptions = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }
 
@@ -48,7 +48,7 @@ export default function App() {
     SortArrow: forwardRef((props, ref) => <ArrowUpward {...props} ref={ref} />),
     ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
     ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
-  };
+  }
 
   const currency = 'USD'
   const currencySymbol = '$'
@@ -59,7 +59,7 @@ export default function App() {
     tickerName: '',
     tickerSymbol: '',
     tickerPrice: '',
-  });
+  })
 
   const [pState, setPState] = useState({
     portfoliocolumns: [ { title: 'Trade time', field: 'tradetime' },{ title: 'Name', field: 'name' },{ title: 'Symbol', field: 'symbol' },{ title: 'Position', field: 'position' },{ title: 'Price at trade ('+currencySymbol+')', field: 'tradePrice' },{ title: 'Active', field: 'active' },{ title: 'Unrealised P&L  ('+currencySymbol+')', field: 'pl' } ],
@@ -68,7 +68,7 @@ export default function App() {
     portfolioId: 0,
     portfolioUnrealisedPL: 0,
     portfolioRealisedPL: 0,
-  });
+  })
 
   /**
   * Async function to retrieve ticker list and populate to state, and get the price for the first currency to display to the user.
@@ -76,7 +76,7 @@ export default function App() {
   const loadTickers = async e => {
     let tickers = [...tState.tickers]
     let tickerlist = []
-    const tickresponse = await fetch('/api/get?command=getTickers')
+    const tickresponse = await fetch('/api/getTickers')
     const tickbody = await tickresponse.json()
     if (tickresponse.status !== 200) {
       throw Error(tickbody.message)
@@ -94,7 +94,7 @@ export default function App() {
     tickerName=tickbody[0].data[0].name
 
     let tickerPrice = [...tState.tickerPrice]
-    const priceresponse = await fetch('/api/get?command=getPrice&tickerId='+tickerId)
+    const priceresponse = await fetch('/api/getPrice?tickerId='+tickerId)
     const pricebody = await priceresponse.json()
     if (priceresponse.status !== 200) {
       throw Error(pricebody.message)
@@ -116,15 +116,15 @@ export default function App() {
     let portfolioRealisedPL = [...pState.portfolioRealisedPL.toString()]
     positionData=[]
     let unrealisedPL=0
-    const response = await fetch('/api/get?command=getPortfolio&portfolio='+pState.portfolioId)
+    const response = await fetch('/api/getPortfolio?portfolio='+pState.portfolioId)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
     } else {
       let newData=[]
       for ( let position of body[0].positions) {
-        let tickerPrice,positionPL=0;
-        const priceresponse = await fetch('/api/get?command=getPrice&tickerId='+position.currencyId)
+        let tickerPrice,positionPL=0
+        const priceresponse = await fetch('/api/getPrice?tickerId='+position.currencyId)
         const pricebody = await priceresponse.json()
         if (priceresponse.status !== 200) {
           throw Error(pricebody.message)
@@ -158,7 +158,7 @@ export default function App() {
       positionData=newData
       // Round for display
       let roundedUnrealisedPL = Math.round((unrealisedPL + 0.00001) * 100) / 100
-      let roundedRealisedPL = Math.round((body[0].realisedPL + 0.00001) * 100) / 100;
+      let roundedRealisedPL = Math.round((body[0].realisedPL + 0.00001) * 100) / 100
       portfolioUnrealisedPL=roundedUnrealisedPL.toFixed(pState.precision).toString()
       portfolioRealisedPL=roundedRealisedPL.toFixed(pState.precision).toString()
       setPState({ ...pState, positionData, portfolioUnrealisedPL, portfolioRealisedPL})
@@ -168,9 +168,12 @@ export default function App() {
   const initPage = async () => {
     loadTickers()
     refreshPortfolio()
-  };
+  }
 
-  useEffect(() => { initPage(); return () => { controller.abort(); } }, []);
+  useEffect(() => {
+    initPage()
+    return () => { controller.abort() } }, []
+  )
 
   /**
   * Async function to retrieve price data for a ticker defined by the CMC ID.
@@ -178,20 +181,20 @@ export default function App() {
   const getPrice = async e => {
     let tickerId =[...tState.tickerId]
     tickerId=e.target.value
-    let tickerData = tState.tickers.find(tickerData => tickerData.id == tickerId);
+    let tickerData = tState.tickers.find(tickerData => tickerData.id == tickerId)
     let tickerSymbol = [...tState.tickerSymbol]
     tickerSymbol = tickerData.symbol
     let tickerName = [...tState.tickerName]
     tickerName = tickerData.name
 
     let tickerPrice = [...tState.tickerPrice]
-    const response = await fetch('/api/get?command=getPrice&tickerId='+tickerId)
+    const response = await fetch('/api/getPrice?tickerId='+tickerId)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
     } else {
       if(body.length>0) {
-        tickerPrice=body[0].data[0].quote[currency].price.toString()
+        tickerPrice=(body[0].data[0].quote[currency].price)
         setTState({ ...tState, tickerId, tickerPrice,tickerName, tickerSymbol })
       }
     }
@@ -211,7 +214,7 @@ export default function App() {
       postData.push({"tickerSymbol":tState.tickerSymbol})
       postData.push({"tickerPrice":tState.tickerPrice})
 
-      const response = await fetch('/api/post?command=newPosition', {
+      const response = await fetch('/api/postNewPosition', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -231,13 +234,14 @@ export default function App() {
   * Async function to reset the cache file in the database based on the button value.
   */
   const updateCacheFile = async e => {
-    const response = await fetch('/api/get?command=cmcCache&file='+e.target.textContent)
+    //    const response = await fetch('/api/get?command=cmcCache&file='+e.target.textContent)
+    const response = await fetch('/api/getCMCCache?file='+e.target.textContent)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
     } else {
       loadTickers()
-      let tickers=[];
+      let tickers=[]
       setTState({...tState, tickers})
       refreshPortfolio()
     }
@@ -250,7 +254,7 @@ export default function App() {
     if (window.confirm ("Are you sure?")) {
       let postData = []
       postData.push({"portfolioId": pState.portfolioId})
-      const response = await fetch('/api/post?command=resetPortfolio', {
+      const response = await fetch('/api/resetPortfolio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,7 +267,7 @@ export default function App() {
       } else {
         setTimeout(() => {
           refreshPortfolio()
-        }, 250);
+        }, 250)
       }
     }
   }
@@ -292,16 +296,16 @@ export default function App() {
       new Promise(resolve => {
         if(oldData.active==='true') {
           setTimeout(() => {
-            fetch('/api/get?command=getPrice&tickerId='+oldData.currencyId, { } )
+            fetch('/api/getPrice?tickerId='+oldData.currencyId, { } )
             .then(function(response) {
-              return response.json();
+              return response.json()
             })
             .then(function(currentPriceRes) {
               let postData = []
               postData.push({"portfolioId": oldData.portfolioId})
               postData.push({"positionId": oldData.id})
               postData.push({"realisedPL": (currentPriceRes[0].data[0].quote.USD.price-oldData.tradePrice)*oldData.position})
-              fetch('/api/post?command=exitPosition', {
+              fetch('/api/exitPosition', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -310,13 +314,13 @@ export default function App() {
               })
               .then(function(response) {
                 refreshPortfolio()
-                resolve();
+                resolve()
               })
             })
-          }, 250);
+          }, 250)
         } else {
           alert("You cannot exit a closed position.")
-          resolve();
+          resolve()
         }
       }),
     }}
