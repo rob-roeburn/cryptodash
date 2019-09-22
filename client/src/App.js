@@ -19,7 +19,6 @@ import Button from '@material-ui/core/Button'
 
 import './App.css'
 
-
 /**
 * This is main export for the app.  Using a functional component and useEffect to access hooks.
 */
@@ -51,7 +50,11 @@ export default function App() {
   }
 
   const currency = 'USD'
-  const currencySymbol = '$'
+
+  const [erState, setERState] = useState({
+    exchangeRates: [ {'rateName': 'USD', 'rate': 1, 'symbol': '$'} , {'rateName' :'GBP', 'rate': 0.89, 'symbol': '£' } ],
+    selectedExchangeRate: [ {'rateName': 'USD', 'rate': 1, 'symbol': '$'} ]
+  })
 
   const [tState, setTState] = useState({
     tickers: [ { } ],
@@ -62,7 +65,7 @@ export default function App() {
   })
 
   const [pState, setPState] = useState({
-    portfoliocolumns: [ { title: 'Trade time', field: 'tradetime' },{ title: 'Name', field: 'name' },{ title: 'Symbol', field: 'symbol' },{ title: 'Position', field: 'position' },{ title: 'Price at trade ('+currencySymbol+')', field: 'tradePrice' },{ title: 'Active', field: 'active' },{ title: 'Unrealised P&L  ('+currencySymbol+')', field: 'pl' } ],
+    portfoliocolumns: [ { title: 'Trade time', field: 'tradetime' },{ title: 'Name', field: 'name' },{ title: 'Symbol', field: 'symbol' },{ title: 'Position', field: 'position' },{ title: 'Price at trade ('+erState.selectedExchangeRate[0].symbol+')', field: 'tradePrice' },{ title: 'Active', field: 'active' },{ title: 'Unrealised P&L  ('+erState.selectedExchangeRate[0].symbol+')', field: 'pl' } ],
     positionData: [ { } ],
     precision: 2,
     portfolioId: 0,
@@ -148,9 +151,9 @@ export default function App() {
             name: position.name,
             symbol: position.symbol,
             position: position.positionQty,
-            tradePrice: position.priceAtTrade,
+            tradePrice: (position.priceAtTrade*erState.selectedExchangeRate[0].rate),
             active: position.active.toString(),
-            pl:positionPL.toString()
+            pl:(positionPL*erState.selectedExchangeRate[0].rate).toString()
           })
         }
       }
@@ -276,13 +279,25 @@ export default function App() {
     (ticker) => <option value={ticker.id}>{ticker.name}</option>
   )
 
+  const getExchangeRates = erState.exchangeRates.map(
+    (exchangeRate) => <option value={exchangeRate.rateName}>{exchangeRate.rateName}</option>
+  )
+
+  const updateExchangeRate = (e) =>  {
+    let selectedExchangeRate = [...erState.selectedExchangeRate]
+    let exchangeRate = erState.exchangeRates.find(exchangeRateData => exchangeRateData.rateName == e.target.value)
+    selectedExchangeRate = []
+    selectedExchangeRate.push(exchangeRate)
+    setERState({ ...erState, selectedExchangeRate })
+  }
+
   return (
     <div>
     {/* Headlines */}
     <div className="outerDiv">
     <div className="leftDiv"><h2>CryptoDash</h2></div>
-    <div className="midDiv"><h4>Unrealised P&L Total: {currencySymbol+''+pState.portfolioUnrealisedPL}</h4></div>
-    <div className="rightDiv"><h4>Realised P&L Total: {currencySymbol+''+pState.portfolioRealisedPL}</h4></div>
+    <div className="midDiv"><h4>Unrealised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioUnrealisedPL*erState.selectedExchangeRate[0].rate)}</h4></div>
+    <div className="rightDiv"><h4>Realised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioRealisedPL*erState.selectedExchangeRate[0].rate)}</h4></div>
     </div>
 
     {/* Portfolio view table */}
@@ -331,13 +346,14 @@ export default function App() {
     <tbody>
     <tr><td><h3>Trade Entry</h3></td></tr>
     <tr><td>Select currency</td><td><select onChange={getPrice}>{getOptions}</select></td></tr>
-    <tr><td>Price of currency ({currency})</td><td id='tickerPrice'>{currencySymbol+''+tState.tickerPrice}</td></tr>
+    <tr><td>Price of currency</td><td id='tickerPrice'>{erState.selectedExchangeRate[0].symbol+''+(tState.tickerPrice*erState.selectedExchangeRate[0].rate) }</td></tr>
     <tr><td>Position quantity</td><td><input id='positionQty' type='text' /></td></tr>
     <tr><td></td><td><Button variant="contained" color="primary" onClick={enterTrade}>Trade</Button></td></tr>
     <tr><td><h3>System Control</h3></td></tr>
     <tr><td>Reload cache from sandbox</td><td><Button variant="contained" color="primary" onClick={updateCacheFile}>coinmarketcap.json</Button></td></tr>
     <tr><td>Reload cache from pro</td><td><Button variant="contained" color="primary" onClick={updateCacheFile}>pro.coinmarketcap.json</Button></td></tr>
     <tr><td>Reset portfolio</td><td><Button variant="contained" color="primary" onClick={resetPortfolio}>Zero positions</Button></td></tr>
+    <tr><td>Currency to view (USD={erState.selectedExchangeRate[0].rate})</td><td><select onChange={updateExchangeRate}>{getExchangeRates}</select></td></tr>
     </tbody>
     </table>
 
