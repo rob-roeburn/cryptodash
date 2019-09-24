@@ -11,7 +11,7 @@ const mongo = require('mongodb').MongoClient
 // use mongourl to connect to local Mongo instance
 const mongourl = 'mongodb://localhost:27017'
 // use atlasurl to connect to Mongo instance at MongoDB Atlas cluster
-const atlasurl = "mongodb+srv://roeburn_user:12345Roeburn@roeburn-oqtkj.mongodb.net/test?retryWrites=true&w=majority";
+const atlasurl = "mongodb+srv://roeburn_user:<pass>@roeburn-oqtkj.mongodb.net/test?retryWrites=true&w=majority";
 
 const ObjectID = require('mongodb').ObjectID
 
@@ -25,7 +25,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 let mongoConnection = function(req, res, mongoDatabase, mongoCollection, mongoType, mongoQuery, mongoObj) {
-  mongo.connect(atlasurl, {
+  mongo.connect(mongourl, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   }, (err, client) => {
