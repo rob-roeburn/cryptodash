@@ -27,6 +27,13 @@ export default function App() {
 
   const controller = new AbortController()
 
+  // leave mongoServer blank to default to send API calls to same endpoint as site
+  // const mongoServer = ""
+  // Set mongoServer to specific port on localhost
+  // const mongoServer = "http://localhost:3010"
+  // Set mongoServer to location of deployed Node application
+  const mongoServer = "http://5e90cf4b14504ed29ff7f62099ca73e6.testing-url.ws"
+
   const dateOptions = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }
 
   const tableIcons = {
@@ -79,7 +86,7 @@ export default function App() {
   const loadTickers = async e => {
     let tickers = [...tState.tickers]
     let tickerlist = []
-    const tickresponse = await fetch('/api/getTickers')
+    const tickresponse = await fetch(mongoServer+'/api/getTickers')
     const tickbody = await tickresponse.json()
     if (tickresponse.status !== 200) {
       throw Error(tickbody.message)
@@ -96,8 +103,8 @@ export default function App() {
     let tickerName = [...tState.tickerName]
     tickerName=tickbody[0].data[0].name
 
-    let tickerPrice = [...tState.tickerPrice]
-    const priceresponse = await fetch('/api/getPrice?tickerId='+tickerId)
+    let tickerPrice = [...tState.tickerPrice.toString()]
+    const priceresponse = await fetch(mongoServer+'/api/getPrice?tickerId='+tickerId)
     const pricebody = await priceresponse.json()
     if (priceresponse.status !== 200) {
       throw Error(pricebody.message)
@@ -119,7 +126,7 @@ export default function App() {
     let portfolioRealisedPL = [...pState.portfolioRealisedPL.toString()]
     positionData=[]
     let unrealisedPL=0
-    const response = await fetch('/api/getPortfolio?portfolio='+pState.portfolioId)
+    const response = await fetch(mongoServer+'/api/getPortfolio?portfolio='+pState.portfolioId)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
@@ -127,7 +134,7 @@ export default function App() {
       let newData=[]
       for ( let position of body[0].positions) {
         let tickerPrice,positionPL=0
-        const priceresponse = await fetch('/api/getPrice?tickerId='+position.currencyId)
+        const priceresponse = await fetch(mongoServer+'/api/getPrice?tickerId='+position.currencyId)
         const pricebody = await priceresponse.json()
         if (priceresponse.status !== 200) {
           throw Error(pricebody.message)
@@ -190,8 +197,8 @@ export default function App() {
     let tickerName = [...tState.tickerName]
     tickerName = tickerData.name
 
-    let tickerPrice = [...tState.tickerPrice]
-    const response = await fetch('/api/getPrice?tickerId='+tickerId)
+    let tickerPrice = [...tState.tickerPrice.toString()]
+    const response = await fetch(mongoServer+'/api/getPrice?tickerId='+tickerId)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
@@ -217,7 +224,7 @@ export default function App() {
       postData.push({"tickerSymbol":tState.tickerSymbol})
       postData.push({"tickerPrice":tState.tickerPrice})
 
-      const response = await fetch('/api/postNewPosition', {
+      const response = await fetch(mongoServer+'/api/postNewPosition', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -237,8 +244,8 @@ export default function App() {
   * Async function to reset the cache file in the database based on the button value.
   */
   const updateCacheFile = async e => {
-    //    const response = await fetch('/api/get?command=cmcCache&file='+e.target.textContent)
-    const response = await fetch('/api/getCMCCache?file='+e.target.textContent)
+    //    const response = await fetch(mongoServer+'/api/get?command=cmcCache&file='+e.target.textContent)
+    const response = await fetch(mongoServer+'/api/getCMCCache?file='+e.target.textContent)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
@@ -257,7 +264,7 @@ export default function App() {
     if (window.confirm ("Are you sure?")) {
       let postData = []
       postData.push({"portfolioId": pState.portfolioId})
-      const response = await fetch('/api/resetPortfolio', {
+      const response = await fetch(mongoServer+'/api/resetPortfolio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -296,8 +303,8 @@ export default function App() {
     {/* Headlines */}
     <div className="outerDiv">
     <div className="leftDiv"><h2>CryptoDash</h2></div>
-    <div className="midDiv"><h4>Unrealised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioUnrealisedPL*erState.selectedExchangeRate[0].rate)}</h4></div>
-    <div className="rightDiv"><h4>Realised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioRealisedPL*erState.selectedExchangeRate[0].rate)}</h4></div>
+    <div className="midDiv"><h4>Unrealised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioUnrealisedPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision).toString()}</h4></div>
+    <div className="rightDiv"><h4>Realised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioRealisedPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision).toString()}</h4></div>
     </div>
 
     {/* Portfolio view table */}
@@ -311,7 +318,7 @@ export default function App() {
       new Promise(resolve => {
         if(oldData.active==='true') {
           setTimeout(() => {
-            fetch('/api/getPrice?tickerId='+oldData.currencyId, { } )
+            fetch(mongoServer+'/api/getPrice?tickerId='+oldData.currencyId, { } )
             .then(function(response) {
               return response.json()
             })
@@ -320,7 +327,7 @@ export default function App() {
               postData.push({"portfolioId": oldData.portfolioId})
               postData.push({"positionId": oldData.id})
               postData.push({"realisedPL": (currentPriceRes[0].data[0].quote.USD.price-oldData.tradePrice)*oldData.position})
-              fetch('/api/exitPosition', {
+              fetch(mongoServer+'/api/exitPosition', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
