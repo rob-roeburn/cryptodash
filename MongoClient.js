@@ -1,4 +1,5 @@
 const express = require('express')
+const cors = require('cors')
 const bodyParser = require('body-parser')
 const rp = require('request-promise')
 
@@ -6,15 +7,25 @@ const app = express()
 const port = process.env.PORT || 3010
 
 const mongo = require('mongodb').MongoClient
+
+// use mongourl to connect to local Mongo instance
 const mongourl = 'mongodb://localhost:27017'
+// use atlasurl to connect to Mongo instance at MongoDB Atlas cluster
+const atlasurl = "mongodb+srv://roeburn_user:12345Roeburn@roeburn-oqtkj.mongodb.net/test?retryWrites=true&w=majority";
 
 const ObjectID = require('mongodb').ObjectID
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Headers", "access-control-allow-origin, content-type, origin, x-requested-with, accept");
+  next()
+})
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 let mongoConnection = function(req, res, mongoDatabase, mongoCollection, mongoType, mongoQuery, mongoObj) {
-  mongo.connect(mongourl, {
+  mongo.connect(atlasurl, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   }, (err, client) => {
@@ -66,7 +77,7 @@ let mongoConnection = function(req, res, mongoDatabase, mongoCollection, mongoTy
   })
 }
 
-app.get('/api/getCMCCache', (getCMCCacheReq, getCMCCacheRes) => {
+app.get('/api/getCMCCache', cors(), (getCMCCacheReq, getCMCCacheRes) => {
   const cmcCache = require('./client/'+getCMCCacheReq.query.file)
   mongoConnection(
     getCMCCacheReq,
@@ -80,7 +91,7 @@ app.get('/api/getCMCCache', (getCMCCacheReq, getCMCCacheRes) => {
   getCMCCacheRes.send({"status":200})
 })
 
-app.get('/api/getCMCCall', (getCMCCallReq, getCMCCallRes) => {
+app.get('/api/getCMCCall', cors(), (getCMCCallReq, getCMCCallRes) => {
   const requestOptions = {
     method: 'GET',
     uri: 'https://'+getCMCCallReq.query.endpoint+''+getCMCCallReq.query.path,
@@ -97,7 +108,7 @@ app.get('/api/getCMCCall', (getCMCCallReq, getCMCCallRes) => {
   })
 })
 
-app.get('/api/getTickers', (getTickersReq, getTickersRes) => {
+app.get('/api/getTickers', cors(), (getTickersReq, getTickersRes) => {
   mongoConnection(
     getTickersReq,
     getTickersRes,
@@ -108,7 +119,7 @@ app.get('/api/getTickers', (getTickersReq, getTickersRes) => {
   )
 })
 
-app.get('/api/getPrice', (getPriceReq, getPriceRes) => {
+app.get('/api/getPrice', cors(), (getPriceReq, getPriceRes) => {
   let tickerId=getPriceReq.query.tickerId
   mongoConnection(
     getPriceReq,
@@ -120,7 +131,7 @@ app.get('/api/getPrice', (getPriceReq, getPriceRes) => {
   )
 })
 
-app.get('/api/getPortfolio', (getPortfolioReq, getPortfolioRes) => {
+app.get('/api/getPortfolio', cors(), (getPortfolioReq, getPortfolioRes) => {
   mongoConnection (
     getPortfolioReq,
     getPortfolioRes,
@@ -131,7 +142,7 @@ app.get('/api/getPortfolio', (getPortfolioReq, getPortfolioRes) => {
   )
 })
 
-app.post('/api/postNewPosition', (postNewPositionReq, postNewPositionRes) => {
+app.post('/api/postNewPosition', cors(), (postNewPositionReq, postNewPositionRes) => {
   mongoConnection (
     postNewPositionReq,
     postNewPositionRes,
@@ -155,7 +166,7 @@ app.post('/api/postNewPosition', (postNewPositionReq, postNewPositionRes) => {
   )
 })
 
-app.post('/api/resetPortfolio', (resetPortfolioReq, resetPortfolioRes) => {
+app.post('/api/resetPortfolio', cors(), (resetPortfolioReq, resetPortfolioRes) => {
   mongoConnection (
     resetPortfolioReq,
     resetPortfolioRes,
@@ -166,7 +177,7 @@ app.post('/api/resetPortfolio', (resetPortfolioReq, resetPortfolioRes) => {
   )
 })
 
-app.post('/api/exitPosition', (exitPositionReq, exitPositionRes) => {
+app.post('/api/exitPosition', cors(), (exitPositionReq, exitPositionRes) => {
   mongoConnection (
     exitPositionReq,
     exitPositionRes,
