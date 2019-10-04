@@ -27,12 +27,14 @@ export default function App() {
 
   const controller = new AbortController()
 
-  // leave mongoServer blank to default to send API calls to same endpoint as site
-  // const mongoServer = ""
-  // Set mongoServer to specific port on localhost
-  // const mongoServer = "http://localhost:3010"
-  // Set mongoServer to location of deployed Node application
-  const mongoServer = "http://5e90cf4b14504ed29ff7f62099ca73e6.testing-url.ws"
+  // leave dbServer blank to default to send API calls to same endpoint as site
+  //const dbServer = ""
+  // Set dbServer to specific port on localhost
+  //const dbServer = "http://localhost:3010"
+  // Set dbServer to AWS docker image
+  //const dbServer = "http://localhost:49160"
+  // Set dbServer to location of deployed Node application
+  const dbServer = "https://3299ece3ccc74205b96d7e7881b7bb1e.vfs.cloud9.eu-west-1.amazonaws.com"
 
   const dateOptions = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }
 
@@ -86,32 +88,29 @@ export default function App() {
   const loadTickers = async e => {
     let tickers = [...tState.tickers]
     let tickerlist = []
-    const tickresponse = await fetch(mongoServer+'/api/getTickers')
+    const tickresponse = await fetch(dbServer+'/api/getTickers?table=cmcCache')
     const tickbody = await tickresponse.json()
     if (tickresponse.status !== 200) {
       throw Error(tickbody.message)
     }
-    for ( let ticker of tickbody[0].data) {
+    for (let ticker of tickbody) {
       tickerlist.push(ticker)
     }
     tickers=tickerlist
-
     let tickerId = [...tState.tickerId]
-    tickerId=tickbody[0].data[0].id.toString()
+    tickerId=tickbody[0].tickerId.toString()
     let tickerSymbol = [...tState.tickerSymbol]
-    tickerSymbol=tickbody[0].data[0].symbol
+    tickerSymbol = tickbody[0].tickerSymbol
     let tickerName = [...tState.tickerName]
-    tickerName=tickbody[0].data[0].name
+    tickerName = tickbody[0].tickerName
 
     let tickerPrice = [...tState.tickerPrice.toString()]
-    const priceresponse = await fetch(mongoServer+'/api/getPrice?tickerId='+tickerId)
+    const priceresponse = await fetch(dbServer+'/api/getPrice?table=cmcCache&tickerId='+tickerId)
     const pricebody = await priceresponse.json()
     if (priceresponse.status !== 200) {
       throw Error(pricebody.message)
     } else {
-      if(pricebody.length>0) {
-        tickerPrice=pricebody[0].data[0].quote[currency].price.toString()
-      }
+      tickerPrice = pricebody.Items[0].cmcCacheData.quote[currency].price.toString()
       setTState({ ...tState, tickers, tickerPrice, tickerId, tickerSymbol, tickerName })
     }
   }
@@ -124,35 +123,32 @@ export default function App() {
     // convert stored integers to strings to remain iterable
     let portfolioUnrealisedPL = [...pState.portfolioUnrealisedPL.toString()]
     let portfolioRealisedPL = [...pState.portfolioRealisedPL.toString()]
-    positionData=[]
-    let unrealisedPL=0
-    const response = await fetch(mongoServer+'/api/getPortfolio?portfolio='+pState.portfolioId)
+    positionData = []
+    let unrealisedPL = 0
+    const response = await fetch(dbServer+'/api/getPortfolio?table=portfolios&portfolioId='+pState.portfolioId)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
     } else {
-      let newData=[]
-      for ( let position of body[0].positions) {
-        let tickerPrice,positionPL=0
-        const priceresponse = await fetch(mongoServer+'/api/getPrice?tickerId='+position.currencyId)
+      let newData = []
+      for ( let position of body.Items[0].positions) {
+        let tickerPrice,positionPL = 0
+        const priceresponse = await fetch(dbServer+'/api/getPrice?table=cmcCache&tickerId='+position.currencyId)
         const pricebody = await priceresponse.json()
         if (priceresponse.status !== 200) {
           throw Error(pricebody.message)
         } else {
-          if(pricebody.length>0) {
-            tickerPrice=pricebody[0].data[0].quote[currency].price.toString()
-          }
+          tickerPrice=pricebody.Items[0].cmcCacheData.quote[currency].price.toString()
           // Only aggregate P&L for active positions
           if(position.active) {
             // Calculate P&L - current price - price at trade * position qty
-            unrealisedPL=unrealisedPL+(tickerPrice-position.priceAtTrade)*position.positionQty
-            // Round for display
-            positionPL=Math.round((((tickerPrice-position.priceAtTrade)*position.positionQty) + 0.00001) * 100) / 100
+            unrealisedPL = unrealisedPL+(tickerPrice-position.priceAtTrade)*position.positionQty
+            positionPL = (tickerPrice-position.priceAtTrade)*position.positionQty
           }
           // Push each position up to the newData array
           newData.push({
             id: position._id,
-            portfolioId: body[0].portfolioId,
+            portfolioId: body.Items[0].portfolioId,
             tradetime: new Date(position.DateTime).toLocaleTimeString("en-GB" , dateOptions ),
             currencyId: position.currencyId,
             name: position.name,
@@ -160,17 +156,14 @@ export default function App() {
             position: position.positionQty,
             tradePrice: (position.priceAtTrade*erState.selectedExchangeRate[0].rate),
             active: position.active.toString(),
-            pl:(positionPL*erState.selectedExchangeRate[0].rate).toString()
+            pl:(positionPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision)
           })
         }
       }
       // Set newData into positionData state for setting
-      positionData=newData
-      // Round for display
-      let roundedUnrealisedPL = Math.round((unrealisedPL + 0.00001) * 100) / 100
-      let roundedRealisedPL = Math.round((body[0].realisedPL + 0.00001) * 100) / 100
-      portfolioUnrealisedPL=roundedUnrealisedPL.toFixed(pState.precision).toString()
-      portfolioRealisedPL=roundedRealisedPL.toFixed(pState.precision).toString()
+      positionData = newData
+      portfolioUnrealisedPL = unrealisedPL
+      portfolioRealisedPL = body.Items[0].realisedPL
       setPState({ ...pState, positionData, portfolioUnrealisedPL, portfolioRealisedPL})
     }
   }
@@ -185,28 +178,35 @@ export default function App() {
     return () => { controller.abort() } }, []
   )
 
+  const searchObject = function(obj, match, field) {
+    let results = []
+    for(let i = 0; i<obj.length; i++) {
+      if(obj[i][field]==parseInt(match)) {
+        results.push(obj[i])
+      }
+    }
+    return results
+  }
+
   /**
   * Async function to retrieve price data for a ticker defined by the CMC ID.
   */
   const getPrice = async e => {
-    let tickerId =[...tState.tickerId]
-    tickerId=e.target.value
-    let tickerData = tState.tickers.find(tickerData => tickerData.id == tickerId)
+    let tickerId = [...tState.tickerId]
+    tickerId = e.target.value
+    let tickerData = searchObject(tState.tickers,tickerId,"tickerId")
     let tickerSymbol = [...tState.tickerSymbol]
-    tickerSymbol = tickerData.symbol
+    tickerSymbol = tickerData[0].tickerSymbol
     let tickerName = [...tState.tickerName]
-    tickerName = tickerData.name
-
+    tickerName = tickerData[0].tickerName
     let tickerPrice = [...tState.tickerPrice.toString()]
-    const response = await fetch(mongoServer+'/api/getPrice?tickerId='+tickerId)
+    const response = await fetch(dbServer+'/api/getPrice?table=cmcCache&tickerId='+tickerId)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
     } else {
-      if(body.length>0) {
-        tickerPrice=(body[0].data[0].quote[currency].price)
-        setTState({ ...tState, tickerId, tickerPrice,tickerName, tickerSymbol })
-      }
+      tickerPrice = (body.Items[0].cmcCacheData.quote[currency].price)
+      setTState({ ...tState, tickerId, tickerPrice,tickerName, tickerSymbol })
     }
   }
 
@@ -224,7 +224,7 @@ export default function App() {
       postData.push({"tickerSymbol":tState.tickerSymbol})
       postData.push({"tickerPrice":tState.tickerPrice})
 
-      const response = await fetch(mongoServer+'/api/postNewPosition', {
+      const response = await fetch(dbServer+'/api/postNewPosition', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,14 +244,14 @@ export default function App() {
   * Async function to reset the cache file in the database based on the button value.
   */
   const updateCacheFile = async e => {
-    //    const response = await fetch(mongoServer+'/api/get?command=cmcCache&file='+e.target.textContent)
-    const response = await fetch(mongoServer+'/api/getCMCCache?file='+e.target.textContent)
+    //    const response = await fetch(dbServer+'/api/get?command=cmcCache&file='+e.target.textContent)
+    const response = await fetch(dbServer+'/api/getCMCCache?file='+e.target.textContent)
     const body = await response.json()
     if (response.status !== 200) {
       throw Error(body.message)
     } else {
       loadTickers()
-      let tickers=[]
+      let tickers = []
       setTState({...tState, tickers})
       refreshPortfolio()
     }
@@ -264,7 +264,7 @@ export default function App() {
     if (window.confirm ("Are you sure?")) {
       let postData = []
       postData.push({"portfolioId": pState.portfolioId})
-      const response = await fetch(mongoServer+'/api/resetPortfolio', {
+      const response = await fetch(dbServer+'/api/resetPortfolio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,7 +283,7 @@ export default function App() {
   }
 
   const getOptions = tState.tickers.map(
-    (ticker) => <option value={ticker.id}>{ticker.name}</option>
+    (ticker) => <option value={ticker.tickerId}>{ticker.tickerName}</option>
   )
 
   const getExchangeRates = erState.exchangeRates.map(
@@ -303,8 +303,8 @@ export default function App() {
     {/* Headlines */}
     <div className="outerDiv">
     <div className="leftDiv"><h2>CryptoDash</h2></div>
-    <div className="midDiv"><h4>Unrealised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioUnrealisedPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision).toString()}</h4></div>
-    <div className="rightDiv"><h4>Realised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioRealisedPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision).toString()}</h4></div>
+    <div className="midDiv"><h4>Unrealised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioUnrealisedPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision)}</h4></div>
+    <div className="rightDiv"><h4>Realised P&L Total: {erState.selectedExchangeRate[0].symbol+''+(pState.portfolioRealisedPL*erState.selectedExchangeRate[0].rate).toFixed(pState.precision)}</h4></div>
     </div>
 
     {/* Portfolio view table */}
@@ -316,25 +316,28 @@ export default function App() {
     editable={{
       onRowDelete: oldData =>
       new Promise(resolve => {
-        if(oldData.active==='true') {
+        if(oldData.active === 'true') {
           setTimeout(() => {
-            fetch(mongoServer+'/api/getPrice?tickerId='+oldData.currencyId, { } )
+            fetch(dbServer+'/api/getPrice?table=cmcCache&tickerId='+oldData.currencyId, { } )
             .then(function(response) {
               return response.json()
             })
             .then(function(currentPriceRes) {
               let postData = []
               postData.push({"portfolioId": oldData.portfolioId})
+              postData.push({"table": "portfolios"})
               postData.push({"positionId": oldData.id})
-              postData.push({"realisedPL": (currentPriceRes[0].data[0].quote.USD.price-oldData.tradePrice)*oldData.position})
-              fetch(mongoServer+'/api/exitPosition', {
+              postData.push({"realisedPL": (currentPriceRes.Items[0].cmcCacheData.quote.USD.price-oldData.tradePrice)*oldData.position})
+              fetch(dbServer+'/api/exitPosition', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
+                  'Access-Control-Allow-Methods': '*',
+                  'Access-Control-Allow-Credentials': 'true',
+                  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
                 },
                 body: JSON.stringify({ post: postData }),
-              })
-              .then(function(response) {
+              }).then(function(response) {
                 refreshPortfolio()
                 resolve()
               })
